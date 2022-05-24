@@ -24,6 +24,8 @@
 #ifndef NO_NEWTYPE_DERIVING
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 #endif
+{-# LANGUAGE ExplicitNamespaces #-}
+
 module Test.QuickCheck.Arbitrary
   (
   -- * Arbitrary and CoArbitrary classes
@@ -180,6 +182,7 @@ import Data.Functor.Compose
 import Data.Functor.Product
 #endif
 
+import GHC.Types (Total, type(@))
 --------------------------------------------------------------------------
 -- ** class Arbitrary
 
@@ -282,7 +285,7 @@ class Arbitrary a where
   shrink _ = []
 
 -- | Lifting of the 'Arbitrary' class to unary type constructors.
-class Arbitrary1 f where
+class Total f => Arbitrary1 f where
   liftArbitrary :: Gen a -> Gen (f a)
   liftShrink    :: (a -> [a]) -> f a -> [f a]
   liftShrink _ _ = []
@@ -308,11 +311,18 @@ shrink2 = liftShrink2 shrink shrink
 #ifndef NO_GENERICS
 -- | Shrink a term to any of its immediate subterms,
 -- and also recursively shrink all subterms.
-genericShrink :: (Generic a, RecursivelyShrink (Rep a), GSubterms (Rep a) a) => a -> [a]
+genericShrink :: (
+  forall x. Rep a @ x,
+  Generic a,
+  RecursivelyShrink (Rep a),
+  GSubterms (Rep a) a) => a -> [a]
 genericShrink x = subterms x ++ recursivelyShrink x
 
 -- | Recursively shrink all immediate subterms.
-recursivelyShrink :: (Generic a, RecursivelyShrink (Rep a)) => a -> [a]
+recursivelyShrink :: (
+  Generic a,
+  forall x. Rep a @ x,
+  RecursivelyShrink (Rep a)) => a -> [a]
 recursivelyShrink = map to . grecursivelyShrink . from
 
 class RecursivelyShrink f where
@@ -342,7 +352,10 @@ instance RecursivelyShrink V1 where
 
 
 -- | All immediate subterms of a term.
-subterms :: (Generic a, GSubterms (Rep a) a) => a -> [a]
+subterms :: (
+  forall x. Rep a @ x,
+  Generic a,
+  GSubterms (Rep a) a) => a -> [a]
 subterms = gSubterms . from
 
 
@@ -1294,11 +1307,17 @@ class CoArbitrary a where
   -- @
   coarbitrary :: a -> Gen b -> Gen b
 #ifndef NO_GENERICS
-  default coarbitrary :: (Generic a, GCoArbitrary (Rep a)) => a -> Gen b -> Gen b
+  default coarbitrary :: (
+    forall x. Rep a @ x,
+    Generic a,
+    GCoArbitrary (Rep a)) => a -> Gen b -> Gen b
   coarbitrary = genericCoarbitrary
 
 -- | Generic CoArbitrary implementation.
-genericCoarbitrary :: (Generic a, GCoArbitrary (Rep a)) => a -> Gen b -> Gen b
+genericCoarbitrary :: (
+  forall x. Rep a @ x,
+  Generic a,
+  GCoArbitrary (Rep a)) => a -> Gen b -> Gen b
 genericCoarbitrary = gCoarbitrary . from
 
 class GCoArbitrary f where

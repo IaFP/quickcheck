@@ -31,7 +31,7 @@ details about how to do that.
 -}
 {-# LANGUAGE CPP #-}
 #ifndef NO_SAFE_HASKELL
-{-# LANGUAGE Safe #-}
+-- {-# LANGUAGE Safe #-}
 #endif
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
 {-# LANGUAGE PatternSynonyms #-}

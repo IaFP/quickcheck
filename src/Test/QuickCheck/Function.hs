@@ -1,6 +1,6 @@
 {-# LANGUAGE TypeOperators, GADTs, CPP, Rank2Types #-}
 #ifndef NO_SAFE_HASKELL
-{-# LANGUAGE Safe #-}
+-- {-# LANGUAGE Safe #-}
 #endif
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
 {-# LANGUAGE PatternSynonyms, ViewPatterns #-}
@@ -101,6 +101,8 @@ import Data.Fixed
 import GHC.Generics hiding (C)
 #endif
 
+import GHC.Types (Total, type(@))
+
 --------------------------------------------------------------------------
 -- concrete functions
 
@@ -165,7 +167,10 @@ table (Map _ h p) = [ (h x, c) | (x,c) <- table p ]
 class Function a where
   function :: (a->b) -> (a:->b)
 #ifndef NO_GENERICS
-  default function :: (Generic a, GFunction (Rep a)) => (a->b) -> (a:->b)
+  default function :: (
+   forall x. Rep a @ x, 
+   Generic a,
+   GFunction (Rep a)) => (a->b) -> (a:->b)
   function = genericFunction
 #endif
 
@@ -459,7 +464,10 @@ instance (Function a, CoArbitrary a, Arbitrary b) => Arbitrary (a:->b) where
 
 #ifndef NO_GENERICS
 -- | Generic 'Function' implementation.
-genericFunction :: (Generic a, GFunction (Rep a)) => (a->b) -> (a:->b)
+genericFunction :: (
+  forall x. Rep a @ x,
+  Generic a,
+  GFunction (Rep a)) => (a->b) -> (a:->b)
 genericFunction = functionMapWith gFunction from to
 
 class GFunction f where

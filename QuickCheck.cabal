@@ -70,8 +70,23 @@ flag old-random
   Manual: False
 
 library
+  default-extensions:
+    PartialTypeConstructors,
+    -- ExplicitNamespaces  and QuantifiedConstraints
+    -- are to support the use of explicit (@), e.g,
+    --   forall x. Rep a @ x
+    ExplicitNamespaces,
+    QuantifiedConstraints,
+    -- My build has been complaining, like this:
+    --  src/Test/QuickCheck/Modifiers.hs:96:28: error:
+    --  • Non type-variable argument in the constraint: Integral Integer
+    --  • In the type signature: toRational :: Blind a -> Rational
+    FlexibleContexts
   Hs-source-dirs: src
-  Build-depends: base >=4.3 && <5, containers
+  Build-depends:
+    base >=4.3 && <5,
+    containers,
+    ghc-prim
   Default-language: Haskell2010
 
   -- New vs old random.
@@ -79,7 +94,7 @@ library
     Build-depends: random >= 1.0.0.3 && < 1.2.0
     cpp-options: -DOLD_RANDOM
   else
-    Build-depends: random >= 1.2.0 && < 1.3
+    Build-depends: random >= 1.2.0
 
   -- We always use splitmix directly rather than going through StdGen
   -- (it's somewhat more efficient).
@@ -107,6 +122,11 @@ library
     Test.QuickCheck.Exception,
     Test.QuickCheck.Features
 
+  Default-Extensions:
+    PartialTypeConstructors,
+    UndecidableInstances
+    
+  
   -- GHC-specific modules.
   if impl(ghc)
     Exposed-Modules: Test.QuickCheck.Function
